@@ -14,7 +14,7 @@ ss = StandardScaler()
 Xtrain = ss.fit_transform(Xtrain)
 Xtest = ss.transform(Xtest)
 
-svc = SVC(random_state=0)
+svc = SVC(kernel='linear',random_state=0)
 svc.fit(Xtrain,ytrain)
 
 ypred = svc.predict(Xtest)
