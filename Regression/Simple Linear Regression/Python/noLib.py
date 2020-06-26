@@ -24,16 +24,38 @@ def costFunction(X,y,theta):
 
 def gradientDescent(X, y, theta, alpha, iters):
     for i in range(iters):
-        theta = theta - (alpha/len(X)) * np.sum(np.multiply((np.matmul(X, theta) - y), X[:,0].reshape(-1,1)))
+        theta = theta - (alpha/len(X)) * np.sum(((X @ theta) - y) * X)
         cost = costFunction(X, y, theta)
-        if i % 10 == 0:
-            print(cost)
+        # if i % 10 == 0:
+        #     print(cost)
     return theta, cost
 
-def featureScale(X):
+def featureScale(X,y):
+    valueSet = []
     for i in range(len(X[0])-1):
-        X[:, i] = (X[:,i] - X[:,i].mean())/X[:,i].std()
-    return X
+        calc = (X[:,i] - X[:,i].mean())/X[:,i].std()
+        valueSet.append([X[:,i].std(),X[:,i].mean()])
+        X[:, i] = calc
+
+    calc = X[:,-1]-X[:,-1].mean()
+    valueSet.append([X[:,-1].mean()])
+    X[:, -1] = calc
+
+    calc = (y[:,0] - y[:,0].mean())/y[:,0].std()
+    valueSet.append([y[:,0].std(),y[:,0].mean()])
+    y[:,0] = calc
+
+    return X,y,valueSet
+
+def inverseScale(X, y, predicted, valueSet):
+    for i in range(len(X[0])-1):
+        X[:,i] = (X[:,i] * valueSet[i][0]) + valueSet[i][-1]
+
+    X[:,-1] = (X[:,-1] + valueSet[-2][0])
+    y = (y * valueSet[-1][0]) + valueSet[-1][-1]
+    predicted = (predicted * valueSet[-1][0]) + valueSet[-1][-1]
+
+    return X,y,predicted
 
 def rsquared(X,y,theta):
     predicted = X @ theta
@@ -46,21 +68,21 @@ X = dataset.iloc[:,:-1].values
 y = dataset.iloc[:,-1].values.reshape(-1,1)
 ones = np.ones((len(X),1))
 X = np.concatenate((X, ones),1)
-# xtrain,xtest,ytrain,ytest = splitData(X,y, .2)
-# featureScale(X)
-# xtest = featureScale(xtest)
+X,y, valueSet = featureScale(X,y)
 
-alpha = .001
-iterations = 5000
-theta = np.array([[.5,.5]]).T
+
+alpha = .005
+iterations = 1000
+theta = np.array([[0,0]]).T
 theta, cost = gradientDescent(X,y,theta,alpha,iterations)
-print(theta)
+print("Score: "+ str(rsquared(X,y,theta)))
+predicted = (X @ theta)
+
+X, y, predicted = inverseScale(X,y,predicted, valueSet)
 
 plt.scatter(X[:,0],y)
 plt.xlabel('Years of Experience')
 plt.ylabel('Salary')
 plt.title('Salary vs Years')
-predicted = X @ theta
 plt.plot(X[:,0],predicted)
 
-print("Score: "+ str(rsquared(X,y,theta)))
