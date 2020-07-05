@@ -38,7 +38,7 @@ def gradientDescent(X, y, theta, alpha, iters):
         cost_history[iteration] = cost
     return theta, cost_history
 
-def featureScale(X):
+def featureScale(X,y):
     valueSet = []
     for i in range(len(X[0])-1):
         calc = (X[:,i] - X[:,i].mean())/X[:,i].std()
@@ -49,15 +49,21 @@ def featureScale(X):
     valueSet.append([X[:,-1].mean()])
     X[:, -1] = calc
 
-    return X,valueSet
+    calc = (y - y.mean())/y.std()
+    valueSet.append([y.std(),y.mean()])
+    y = calc
 
-def inverseScale(X, valueSet):
+    return X,y,valueSet
+
+def inverseScale(X, y, predicted, valueSet):
     for i in range(len(X[0])-1):
         X[:,i] = (X[:,i] * valueSet[i][0]) + valueSet[i][-1]
 
-    X[:,-1] = (X[:,-1] + valueSet[-1][0])
+    X[:,-1] = (X[:,-1] + valueSet[-2][0])
+    y = (y * valueSet[-1][0]) + valueSet[-1][-1]
+    predicted = (predicted * valueSet[-1][0]) + valueSet[-1][-1]
 
-    return X
+    return X,y,predicted
 
 def rsquared(X,y,theta):
     predicted = X @ theta
@@ -75,19 +81,22 @@ for i in range(polynomialOrder-1):
 ones = np.ones((len(X),1))
 X = np.concatenate((X, ones),1)
 
-
-# X,valueSet = featurScale(X)
-alpha = .0006
+# print(y)
+X,y,valueSet = featureScale(X,y)
+# print(y)
+# print(X)
+alpha = .055
 iterations = 1000
-# theta = np.array([[0 for i in range(len(X[0]))]]).reshape(-1,1)
+# theta = np.array([0 for d in range(polynomialOrder+1)]).reshape(-1,1)
 # print(theta)
-theta = np.array([[0,0,0]]).reshape(-1,1)
+theta = np.array([0,0,0]).reshape(-1,1)
+# print(theta)
 
 
 theta, cost = gradientDescent(X,y,theta,alpha,iterations)
 print("Score: "+ str(rsquared(X,y,theta)))
 predicted = (X @ theta)
-# X = inverseScale(X,valueSet)
+X,y,predicted = inverseScale(X,y,predicted,valueSet)
 print(theta)
 plt.scatter(X[:,0],y)
 plt.xlabel('Years of Experience')
