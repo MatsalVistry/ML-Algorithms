@@ -23,14 +23,22 @@ def costFunction(X,y,theta):
     return np.sum(inner) / (2 * len(X))  
 
 def gradientDescent(X, y, theta, alpha, iters):
-    for i in range(iters):
-        theta = theta - (alpha/len(X)) * np.sum(((X @ theta) - y) * X)
+    cost_history = [0] * iters
+    m = len(y)
+    
+    for iteration in range(iters):
+        h = X @ theta
+        loss = h - y
+        gradient = X.T.dot(loss) / m
+        if iteration&100==0:
+            print(gradient)
+        theta = theta - (gradient * alpha)
         cost = costFunction(X, y, theta)
-        # if i % 10 == 0:
-        #     print(cost)
-    return theta, cost
 
-def featureScale(X,y):
+        cost_history[iteration] = cost
+    return theta, cost_history
+
+def featureScale(X):
     valueSet = []
     for i in range(len(X[0])-1):
         calc = (X[:,i] - X[:,i].mean())/X[:,i].std()
@@ -41,21 +49,15 @@ def featureScale(X,y):
     valueSet.append([X[:,-1].mean()])
     X[:, -1] = calc
 
-    calc = (y[:,0] - y[:,0].mean())/y[:,0].std()
-    valueSet.append([y[:,0].std(),y[:,0].mean()])
-    y[:,0] = calc
+    return X,valueSet
 
-    return X,y,valueSet
-
-def inverseScale(X, y, predicted, valueSet):
+def inverseScale(X, valueSet):
     for i in range(len(X[0])-1):
         X[:,i] = (X[:,i] * valueSet[i][0]) + valueSet[i][-1]
 
-    X[:,-1] = (X[:,-1] + valueSet[-2][0])
-    y = (y * valueSet[-1][0]) + valueSet[-1][-1]
-    predicted = (predicted * valueSet[-1][0]) + valueSet[-1][-1]
+    X[:,-1] = (X[:,-1] + valueSet[-1][0])
 
-    return X,y,predicted
+    return X
 
 def rsquared(X,y,theta):
     predicted = X @ theta
@@ -63,23 +65,30 @@ def rsquared(X,y,theta):
     ssres = np.sum(pow(y-predicted,2))
     return 1-(ssres/sstot)
 
-dataset = pd.read_csv('Salary_Data.csv')
-X = dataset.iloc[:,:-1].values
+dataset = pd.read_csv('Position_Salaries.csv')
+X = dataset.iloc[:,1:-1].values
 y = dataset.iloc[:,-1].values.reshape(-1,1)
+polynomialOrder = 2
+for i in range(polynomialOrder-1):
+    X = np.concatenate((X, (X[:,0]*X[:,0]).reshape(-1,1) ),1)
+
 ones = np.ones((len(X),1))
 X = np.concatenate((X, ones),1)
-X,y, valueSet = featureScale(X,y)
 
 
-alpha = .005
+# X,valueSet = featurScale(X)
+alpha = .0006
 iterations = 1000
-theta = np.array([[0,0]]).reshape(-1,1)
+# theta = np.array([[0 for i in range(len(X[0]))]]).reshape(-1,1)
+# print(theta)
+theta = np.array([[0,0,0]]).reshape(-1,1)
+
+
 theta, cost = gradientDescent(X,y,theta,alpha,iterations)
 print("Score: "+ str(rsquared(X,y,theta)))
 predicted = (X @ theta)
-
-X, y, predicted = inverseScale(X,y,predicted, valueSet)
-
+# X = inverseScale(X,valueSet)
+print(theta)
 plt.scatter(X[:,0],y)
 plt.xlabel('Years of Experience')
 plt.ylabel('Salary')
