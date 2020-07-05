@@ -41,9 +41,9 @@ def featureScale(X,y):
     valueSet.append([X[:,-1].mean()])
     X[:, -1] = calc
 
-    calc = (y[:,0] - y[:,0].mean())/y[:,0].std()
-    valueSet.append([y[:,0].std(),y[:,0].mean()])
-    y[:,0] = calc
+    calc = (y - y.mean())/y.std()
+    valueSet.append([y.std(),y.mean()])
+    y = calc
 
     return X,y,valueSet
 
