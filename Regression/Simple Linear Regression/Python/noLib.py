@@ -23,12 +23,20 @@ def costFunction(X,y,theta):
     return np.sum(inner) / (2 * len(X))  
 
 def gradientDescent(X, y, theta, alpha, iters):
-    for i in range(iters):
-        theta = theta - (alpha/len(X)) * np.sum(((X @ theta) - y) * X)
+    cost_history = [0] * iters
+    m = len(y)
+    
+    for iteration in range(iters):
+        h = X @ theta
+        loss = h - y
+        gradient = X.T.dot(loss) / m
+        if iteration&100==0:
+            print(gradient)
+        theta = theta - (gradient * alpha)
         cost = costFunction(X, y, theta)
-        # if i % 10 == 0:
-        #     print(cost)
-    return theta, cost
+
+        cost_history[iteration] = cost
+    return theta, cost_history
 
 def featureScale(X,y):
     valueSet = []
@@ -86,3 +94,4 @@ plt.ylabel('Salary')
 plt.title('Salary vs Years')
 plt.plot(X[:,0],predicted)
 
+print(theta)

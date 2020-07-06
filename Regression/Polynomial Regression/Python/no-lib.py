@@ -30,7 +30,8 @@ def gradientDescent(X, y, theta, alpha, iters):
         h = X @ theta
         loss = h - y
         gradient = X.T.dot(loss) / m
-        if iteration&100==0:
+        # multiply how wrong each point was with each column and get the total, giving a scalar value to change the theta for each theta
+        if iteration % 200==0:
             print(gradient)
         theta = theta - (gradient * alpha)
         cost = costFunction(X, y, theta)
@@ -74,23 +75,21 @@ def rsquared(X,y,theta):
 dataset = pd.read_csv('Position_Salaries.csv')
 X = dataset.iloc[:,1:-1].values
 y = dataset.iloc[:,-1].values.reshape(-1,1)
-polynomialOrder = 2
+polynomialOrder = 5
 for i in range(polynomialOrder-1):
-    X = np.concatenate((X, (X[:,0]*X[:,0]).reshape(-1,1) ),1)
+    X = np.concatenate((X, (pow(X[:,0],i+2)).reshape(-1,1) ),1)
 
 ones = np.ones((len(X),1))
 X = np.concatenate((X, ones),1)
 
-# print(y)
 X,y,valueSet = featureScale(X,y)
-# print(y)
-# print(X)
+
 alpha = .055
 iterations = 1000
-# theta = np.array([0 for d in range(polynomialOrder+1)]).reshape(-1,1)
-# print(theta)
-theta = np.array([0,0,0]).reshape(-1,1)
-# print(theta)
+theta = []
+for i in range(polynomialOrder+1):
+    theta.append(0)
+theta = np.array(theta).reshape(-1,1)
 
 
 theta, cost = gradientDescent(X,y,theta,alpha,iterations)
